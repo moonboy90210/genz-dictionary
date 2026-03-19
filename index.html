@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GEN-Z DICT</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">GZ<span class="logo-dot">.</span>DICT</a>
+      <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-icon">◐</span>
+        </button>
+        <a href="mailto:timone427@gmail.com" class="btn-ghost" title="Contact Support">✉</a>
+        <div class="profile-wrap" id="profileWrap">
+          <!-- injected by JS -->
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="hero-label">THE INTERNET'S SLANG BIBLE</p>
+      <h1 class="hero-title">GEN-Z<br/><span class="hero-accent">DICTIONARY</span></h1>
+      <p class="hero-sub">fr fr no cap — the only slang resource that hits different 💀</p>
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="search a slang..." autocomplete="off" />
+        <button id="searchBtn">→</button>
+      </div>
+    </section>
+
+    <section class="alpha-index" id="alphaIndex">
+      <p class="section-label">BROWSE BY LETTER</p>
+      <div class="letters" id="letterNav">
+        <!-- injected by JS -->
+      </div>
+    </section>
+
+    <section class="slang-section" id="slangSection">
+      <div class="section-header">
+        <p class="section-label" id="sectionLabel">ALL SLANGS</p>
+        <span class="slang-count" id="slangCount"></span>
+      </div>
+      <div class="slang-grid" id="slangGrid">
+        <!-- injected by JS -->
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span class="logo">GZ<span class="logo-dot">.</span>DICT</span>
+      <span>© 2026 · <a href="mailto:timone427@gmail.com">timone427@gmail.com</a></span>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GZ.DICT — Login / Sign Up</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">GZ<span class="logo-dot">.</span>DICT</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><span class="theme-icon">◐</span></button>
+    </div>
+  </header>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">LOG IN</button>
+        <button class="auth-tab" data-tab="signup">SIGN UP</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form class="auth-form active" id="loginForm" data-form="login">
+        <h2 class="auth-title">WELCOME BACK</h2>
+        <p class="auth-sub">Login to upload slangs & flex your stars ⭐</p>
+        <div class="field">
+          <label>USERNAME</label>
+          <input type="text" id="loginUsername" placeholder="@username" required />
+        </div>
+        <div class="field">
+          <label>EMAIL</label>
+          <input type="email" id="loginEmail" placeholder="your@email.com" required />
+        </div>
+        <div class="form-error" id="loginError"></div>
+        <button type="submit" class="btn-primary">LOG IN →</button>
+      </form>
+
+      <!-- SIGNUP FORM -->
+      <form class="auth-form" id="signupForm" data-form="signup">
+        <h2 class="auth-title">CREATE ACCOUNT</h2>
+        <p class="auth-sub">Join the community. No cap.</p>
+        <div class="field">
+          <label>USERNAME</label>
+          <input type="text" id="signupUsername" placeholder="@coolhandle" required />
+        </div>
+        <div class="field">
+          <label>EMAIL</label>
+          <input type="email" id="signupEmail" placeholder="your@email.com" required />
+        </div>
+        <div class="form-error" id="signupError"></div>
+        <button type="submit" class="btn-primary">CREATE ACCOUNT →</button>
+      </form>
+    </div>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="auth.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

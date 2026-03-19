@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GZ.DICT — Admin</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">GZ<span class="logo-dot">.</span>DICT</a>
+      <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle"><span class="theme-icon">◐</span></button>
+        <span class="admin-badge">⚡ ADMIN</span>
+        <button class="btn-ghost" id="logoutBtn">LOG OUT</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="pending">PENDING <span class="tab-badge" id="pendingBadge">0</span></button>
+      <button class="admin-tab" data-tab="approved">APPROVED</button>
+      <button class="admin-tab" data-tab="users">USERS</button>
+      <button class="admin-tab" data-tab="add">ADD SLANG</button>
+    </div>
+
+    <!-- PENDING SUBMISSIONS -->
+    <div class="admin-panel active" id="pendingPanel">
+      <p class="section-label">PENDING APPROVAL</p>
+      <div id="pendingList" class="admin-list"></div>
+    </div>
+
+    <!-- APPROVED SLANGS -->
+    <div class="admin-panel" id="approvedPanel">
+      <p class="section-label">ALL APPROVED SLANGS</p>
+      <div id="approvedList" class="admin-list"></div>
+    </div>
+
+    <!-- USERS -->
+    <div class="admin-panel" id="usersPanel">
+      <p class="section-label">REGISTERED USERS</p>
+      <div id="usersList" class="admin-list"></div>
+    </div>
+
+    <!-- ADD SLANG -->
+    <div class="admin-panel" id="addPanel">
+      <p class="section-label">ADD NEW SLANG DIRECTLY</p>
+      <form class="upload-form" id="adminAddForm">
+        <div class="field">
+          <label>SLANG WORD</label>
+          <input type="text" id="adminWord" required />
+        </div>
+        <div class="field">
+          <label>MEANING</label>
+          <textarea id="adminMeaning" rows="2" required></textarea>
+        </div>
+        <div class="field">
+          <label>EXAMPLE SENTENCE</label>
+          <textarea id="adminExample" rows="2" required></textarea>
+        </div>
+        <div class="form-error" id="adminError"></div>
+        <div class="form-success" id="adminSuccess"></div>
+        <button type="submit" class="btn-primary">ADD TO DICTIONARY →</button>
+      </form>
+    </div>
+
+    <!-- EDIT MODAL -->
+    <div class="modal-overlay" id="editModal">
+      <div class="modal-card">
+        <h3 class="modal-title">EDIT SLANG</h3>
+        <input type="hidden" id="editId" />
+        <div class="field">
+          <label>SLANG WORD</label>
+          <input type="text" id="editWord" title="slang-word"/>
+        </div>
+        <div class="field">
+          <label>MEANING</label>
+          <textarea id="editMeaning" rows="2" title="meaning"></textarea>
+        </div>
+        <div class="field">
+          <label>EXAMPLE</label>
+          <textarea id="editExample" rows="2" title="example"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary" id="saveEditBtn">SAVE →</button>
+          <button class="btn-ghost" id="closeEditBtn">CANCEL</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="auth.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
