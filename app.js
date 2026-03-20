@@ -19,7 +19,7 @@ const session = GZAuth.getSession();
 if (session && GZAuth.isAdmin(session)) {
   profileWrap.innerHTML = `<a href="admin.html" class="profile-btn">⚡ Admin</a>`;
 } else if (session) {
-  profileWrap.innerHTML = `<a href="profile.html" class="profile-btn">★ ${session.username}</a>`;
+  profileWrap.innerHTML = `<a href="profile.html" class="profile-btn">★${session.username}</a>`;
 } else {
   profileWrap.innerHTML = `<a href="login.html" class="profile-btn">⊕ Sign In</a>`;
 }
