@@ -30,7 +30,7 @@ document.getElementById('starCount').textContent = session.stars || 0;
 document.getElementById('logoutBtn').addEventListener('click', () => GZAuth.logout());
 
 // Upload form
-document.getElementById('uploadForm').addEventListener('submit', e => {
+document.getElementById('uploadForm').addEventListener('submit', async e => {
   e.preventDefault();
   const word = document.getElementById('slangWord').value.trim();
   const meaning = document.getElementById('slangMeaning').value.trim();
@@ -55,22 +55,21 @@ document.getElementById('uploadForm').addEventListener('submit', e => {
     submittedAt: Date.now()
   };
 
-  GZData.addPendingSlang(slang);
+  await GZData.addPendingSlang(slang);
   sucEl.textContent = '✓ Submitted! Awaiting admin approval.';
   document.getElementById('uploadForm').reset();
-  renderMySubmissions();
+  await renderMySubmissions();
 });
 
 function escHtml(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function renderMySubmissions() {
+async function renderMySubmissions() {
   const grid = document.getElementById('mySlangGrid');
   grid.innerHTML = '';
-
-  const approved = GZData.getApprovedSlangs().filter(s => s.uploadedBy === session.username);
-  const pending = GZData.getPending().filter(s => s.uploadedBy === session.username);
+  const approved = await GZData.getSlangsForUser(session.username);
+  const pending  = (await GZData.getPending()).filter(s => s.uploadedBy === session.username);
   const all = [...approved, ...pending].sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
 
   if (!all.length) {
@@ -94,6 +93,5 @@ function renderMySubmissions() {
 renderMySubmissions();
 
 // Refresh stars from storage
-const freshUsers = GZData.getUsers();
-const me = freshUsers.find(u => u.username === session.username);
+const me = await GZData.getUser(session.username);
 if (me) { document.getElementById('starCount').textContent = me.stars || 0; }

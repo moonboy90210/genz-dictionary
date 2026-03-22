@@ -29,27 +29,28 @@ document.querySelectorAll('.auth-tab').forEach(tab => {
 });
 
 // Login
-document.getElementById('loginForm').addEventListener('submit', e => {
+document.getElementById('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const username = document.getElementById('loginUsername').value.trim();
   const email = document.getElementById('loginEmail').value.trim();
   const err = document.getElementById('loginError');
   err.textContent = '';
   if (!username || !email) { err.textContent = 'Both fields are required.'; return; }
-  const res = GZAuth.login(username, email);
+  const res = await GZAuth.login(username, email);
   if (!res.ok) { err.textContent = res.error; return; }
   location.href = res.redirect;
 });
 
+
 // Signup
-document.getElementById('signupForm').addEventListener('submit', e => {
+document.getElementById('signupForm').addEventListener('submit', async e => {
   e.preventDefault();
   const username = document.getElementById('signupUsername').value.trim();
   const email = document.getElementById('signupEmail').value.trim();
   const err = document.getElementById('signupError');
   err.textContent = '';
   if (!username || !email) { err.textContent = 'Both fields are required.'; return; }
-  const res = GZAuth.signup(username, email);
+  const res = await GZAuth.signup(username, email);
   if (!res.ok) { err.textContent = res.error; return; }
   location.href = res.redirect;
 });

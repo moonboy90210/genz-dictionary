@@ -40,8 +40,8 @@ function renderAll() {
 }
 
 // PENDING
-function renderPending() {
-  const list = GZData.getPending();
+async   function renderPending() {
+  const list = await GZData.getPending();
   document.getElementById('pendingBadge').textContent = list.length;
   const el = document.getElementById('pendingList');
   if (!list.length) { el.innerHTML = `<p style="color:var(--text2);padding:1.5rem">No pending submissions.</p>`; return; }
@@ -60,10 +60,10 @@ function renderPending() {
         <button class="btn-approve" data-id="${s.id}">✓ APPROVE</button>
         <button class="btn-reject" data-id="${s.id}">✕ REJECT</button>
       </div>`;
-    item.querySelector('.btn-approve').addEventListener('click', () => {
-      GZData.approvePending(s.id);
-      renderAll();
-    });
+   item.querySelector('.btn-approve').addEventListener('click', async () => {
+  await GZData.approvePending(s.id);
+  await renderAll();
+});
     item.querySelector('.btn-reject').addEventListener('click', () => {
       GZData.rejectPending(s.id);
       renderAll();
@@ -73,8 +73,9 @@ function renderPending() {
 }
 
 // APPROVED SLANGS
-function renderApproved() {
-  const list = GZData.getApprovedSlangs().sort((a, b) => a.word.localeCompare(b.word));
+async function renderApproved() {
+  const all = await GZData.getApprovedSlangs();
+  const list = all.sort((a, b) => a.word.localeCompare(b.word));
   const el = document.getElementById('approvedList');
   if (!list.length) { el.innerHTML = `<p style="color:var(--text2);padding:1.5rem">No slangs yet.</p>`; return; }
   el.innerHTML = '';
@@ -92,17 +93,17 @@ function renderApproved() {
         <button class="btn-edit" data-id="${s.id}">✏ EDIT</button>
         <button class="btn-delete" data-id="${s.id}">✕ DELETE</button>
       </div>`;
-    item.querySelector('.btn-edit').addEventListener('click', () => openEdit(s));
-    item.querySelector('.btn-delete').addEventListener('click', () => {
-      if (confirm(`Delete "${s.word}"?`)) { GZData.deleteSlang(s.id); renderAll(); }
-    });
+   item.querySelector('.btn-edit').addEventListener('click', () => openEdit(s));
+item.querySelector('.btn-delete').addEventListener('click', async () => {
+  if (confirm(`Delete "${s.word}"?`)) { await GZData.deleteSlang(s.id); await renderAll(); }
+});
     el.appendChild(item);
   });
 }
 
 // USERS
-function renderUsers() {
-  const users = GZData.getUsers();
+async function renderUsers() {
+  const users = await GZData.getUsers();
   const el = document.getElementById('usersList');
   if (!users.length) { el.innerHTML = `<p style="color:var(--text2);padding:1.5rem">No registered users yet.</p>`; return; }
   el.innerHTML = '';
@@ -120,20 +121,20 @@ function renderUsers() {
         <button class="btn-star-save" data-user="${escHtml(u.username)}">SAVE</button>
         <button class="btn-delete" data-user="${escHtml(u.username)}" style="margin-left:.5rem">✕</button>
       </div>`;
-    item.querySelector('.btn-star-save').addEventListener('click', () => {
-      const val = item.querySelector('.star-input').value;
-      GZData.updateUserStars(u.username, val);
-      renderUsers();
-    });
-    item.querySelector('.btn-delete').addEventListener('click', () => {
-      if (confirm(`Delete user ${u.username}?`)) { GZData.deleteUser(u.username); renderAll(); }
-    });
+item.querySelector('.btn-star-save').addEventListener('click', async () => {
+  const val = item.querySelector('.star-input').value;
+  await GZData.updateUserStars(u.username, val);
+  await renderUsers();
+});
+item.querySelector('.btn-delete').addEventListener('click', async () => {
+  if (confirm(`Delete user ${u.username}?`)) { await GZData.deleteUser(u.username); await renderAll(); }
+});
     el.appendChild(item);
   });
 }
 
 // ADMIN ADD SLANG
-document.getElementById('adminAddForm').addEventListener('submit', e => {
+document.getElementById('adminAddForm').addEventListener('submit', async e => {
   e.preventDefault();
   const word = document.getElementById('adminWord').value.trim();
   const meaning = document.getElementById('adminMeaning').value.trim();
@@ -142,12 +143,16 @@ document.getElementById('adminAddForm').addEventListener('submit', e => {
   const suc = document.getElementById('adminSuccess');
   err.textContent = ''; suc.textContent = '';
   if (!word || !meaning || !example) { err.textContent = 'All fields required.'; return; }
-  const slangs = GZData.getSlangs();
-  slangs.push({ id: GZData.genId(), word, meaning, example, letter: word[0].toUpperCase(), likes:0, dislikes:0, comments:[], uploadedBy:null, status:'approved', submittedAt: Date.now() });
-  GZData.saveSlangs(slangs);
+  await GZData.addApprovedSlang({
+    word, meaning, example,
+    letter: word[0].toUpperCase(),
+    likes: 0, dislikes: 0, comments: [],
+    uploadedBy: null, status: 'approved',
+    submittedAt: Date.now()
+  });
   suc.textContent = `✓ "${word}" added to dictionary.`;
   document.getElementById('adminAddForm').reset();
-  renderAll();
+  await renderAll();
 });
 
 // EDIT MODAL
@@ -161,16 +166,18 @@ function openEdit(s) {
 }
 document.getElementById('closeEditBtn').addEventListener('click', () => editModal.classList.remove('open'));
 editModal.addEventListener('click', e => { if (e.target === editModal) editModal.classList.remove('open'); });
-document.getElementById('saveEditBtn').addEventListener('click', () => {
+document.getElementById('saveEditBtn').addEventListener('click', async () => {
   const id = document.getElementById('editId').value;
   const word = document.getElementById('editWord').value.trim();
   const meaning = document.getElementById('editMeaning').value.trim();
   const example = document.getElementById('editExample').value.trim();
   if (!word || !meaning || !example) return;
-  GZData.updateSlang(id, { word, meaning, example, letter: word[0].toUpperCase() });
+ await GZData.updateSlang(id, { word, meaning, example, letter: word[0].toUpperCase() });
   editModal.classList.remove('open');
-  renderAll();
+  await renderAll();
 });
 
 // Init
-renderAll();
+async function renderAll() {
+  await Promise.all([renderPending(), renderApproved(), renderUsers()]);
+}
