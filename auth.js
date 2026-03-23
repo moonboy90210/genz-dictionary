@@ -9,21 +9,19 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  doc, getDoc, setDoc
+  doc, getDoc, getDocs, setDoc,
+  collection, query, where   // ✅ explicitly import these
 } from "./firebase.js";
 
 const ADMIN_EMAIL    = "timone427@gmail.com";
 const ADMIN_USERNAME = "@admin19";
-// 20 minute inactivity timeout
-const TIMEOUT_MS     = 20 * 60 * 1000;
+const TIMEOUT_MS     = 20 * 60 * 1000; // 20 minutes
 
-let _currentUser  = null;  // Firebase Auth user object
-let _sessionData  = null;  // GZ profile data (username, stars, isAdmin)
+let _currentUser   = null;
+let _sessionData   = null;
 let _inactiveTimer = null;
 
 // ---- session listeners ----
-
-// Called by each page on load to get the current auth state
 function onSessionReady(callback) {
   onAuthStateChanged(auth, async (firebaseUser) => {
     if (!firebaseUser) {
@@ -33,7 +31,6 @@ function onSessionReady(callback) {
       return;
     }
     _currentUser = firebaseUser;
-    // Load GZ profile from Firestore
     const snap = await getDoc(doc(db, "users", firebaseUser.uid));
     _sessionData = snap.exists() ? { uid: firebaseUser.uid, ...snap.data() } : null;
     callback(_sessionData);
@@ -41,9 +38,7 @@ function onSessionReady(callback) {
   });
 }
 
-function getSession() {
-  return _sessionData;
-}
+function getSession() { return _sessionData; }
 
 function isAdmin(session) {
   const s = session || _sessionData;
@@ -53,7 +48,6 @@ function isAdmin(session) {
 }
 
 // ---- inactivity timer ----
-
 function _resetTimer() {
   if (_inactiveTimer) clearTimeout(_inactiveTimer);
   _inactiveTimer = setTimeout(async () => {
@@ -61,23 +55,17 @@ function _resetTimer() {
     location.href = "login.html";
   }, TIMEOUT_MS);
 }
-
-function _touchSession() {
-  if (_currentUser) _resetTimer();
-}
-
-document.addEventListener("click",   _touchSession);
-document.addEventListener("keydown",  _touchSession);
+function _touchSession() { if (_currentUser) _resetTimer(); }
+document.addEventListener("click", _touchSession);
+document.addEventListener("keydown", _touchSession);
 
 // ---- login ----
-
 async function login(username, email) {
   const uname = username.trim().startsWith("@")
     ? username.trim().toLowerCase()
     : "@" + username.trim().toLowerCase();
   const mail = email.trim().toLowerCase();
 
-  // Admin uses a fixed Firebase Auth account you create manually in the console
   if (uname === ADMIN_USERNAME && mail === ADMIN_EMAIL) {
     try {
       await signInWithEmailAndPassword(auth, mail, _adminPassword());
@@ -87,9 +75,7 @@ async function login(username, email) {
     }
   }
 
-  // Regular users — look up their email in Firestore first, then sign in
   try {
-    // Find the Firestore user document by username to get their email
     const snap = await getDocs(
       query(collection(db, "users"), where("username", "==", uname))
     );
@@ -100,13 +86,12 @@ async function login(username, email) {
 
     await signInWithEmailAndPassword(auth, mail, _derivePassword(uname, mail));
     return { ok: true, redirect: "profile.html" };
-  } catch (e) {
+  } catch {
     return { ok: false, error: "Login failed. Check your credentials." };
   }
 }
 
 // ---- signup ----
-
 async function signup(username, email) {
   let uname = username.trim().toLowerCase();
   if (!uname.startsWith("@")) uname = "@" + uname;
@@ -115,7 +100,7 @@ async function signup(username, email) {
   if (uname === ADMIN_USERNAME) return { ok: false, error: "That username is reserved." };
   if (!mail.includes("@"))      return { ok: false, error: "Enter a valid email." };
 
-  // Check username taken
+  // ✅ Check if username already exists
   const existing = await getDocs(
     query(collection(db, "users"), where("username", "==", uname))
   );
@@ -125,15 +110,17 @@ async function signup(username, email) {
     const cred = await createUserWithEmailAndPassword(
       auth, mail, _derivePassword(uname, mail)
     );
-    // Store GZ profile in Firestore under the Firebase Auth UID
+
+    // ✅ Save profile in Firestore
     await setDoc(doc(db, "users", cred.user.uid), {
-      uid:        cred.user.uid,
-      username:   uname,
-      email:      mail,
-      stars:      0,
-      isAdmin:    false,
-      joinedAt:   Date.now()
+      uid:      cred.user.uid,
+      username: uname,
+      email:    mail,
+      stars:    0,
+      isAdmin:  false,
+      joinedAt: Date.now()
     });
+
     return { ok: true, redirect: "profile.html" };
   } catch (e) {
     if (e.code === "auth/email-already-in-use") return { ok: false, error: "Email already registered." };
@@ -142,14 +129,12 @@ async function signup(username, email) {
 }
 
 // ---- logout ----
-
 async function logout() {
   await signOut(auth);
   location.href = "index.html";
 }
 
 // ---- guards ----
-
 function requireAuth(onReady) {
   onSessionReady((session) => {
     if (!session) { location.href = "login.html"; return; }
@@ -157,14 +142,12 @@ function requireAuth(onReady) {
     onReady(session);
   });
 }
-
 function requireAdmin(onReady) {
   onSessionReady((session) => {
     if (!session || !isAdmin(session)) { location.href = "index.html"; return; }
     onReady(session);
   });
 }
-
 function requireGuest(onReady) {
   onSessionReady((session) => {
     if (session) {
@@ -176,18 +159,10 @@ function requireGuest(onReady) {
 }
 
 // ---- password derivation ----
-// Since your signup only takes username + email (no password field),
-// we derive a deterministic password. Upgrade to real password field for prod.
-
 function _derivePassword(username, email) {
-  // Simple but consistent — enough for username+email-only auth
   return btoa(`${username}::${email}::gz-dict-2025`).slice(0, 32);
 }
-
 function _adminPassword() {
-  // Admin account password — set this manually in Firebase Console
-  // Auth > Users > timone427@gmail.com > Reset password
-  // Then hardcode that password here or put it in a meta tag set by Netlify env
   return document.querySelector('meta[name="gz-ap"]')?.content || "";
 }
 
