@@ -9,16 +9,21 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  doc, getDoc, getDocs, setDoc,
-  collection, query, where   // ✅ explicitly import these
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  collection,
+  query,
+  where, // ✅ explicitly import these
 } from "./firebase.js";
 
-const ADMIN_EMAIL    = "timone427@gmail.com";
+const ADMIN_EMAIL = "timone427@gmail.com";
 const ADMIN_USERNAME = "@admin19";
-const TIMEOUT_MS     = 20 * 60 * 1000; // 20 minutes
+const TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
 
-let _currentUser   = null;
-let _sessionData   = null;
+let _currentUser = null;
+let _sessionData = null;
 let _inactiveTimer = null;
 
 // ---- session listeners ----
@@ -32,19 +37,25 @@ function onSessionReady(callback) {
     }
     _currentUser = firebaseUser;
     const snap = await getDoc(doc(db, "users", firebaseUser.uid));
-    _sessionData = snap.exists() ? { uid: firebaseUser.uid, ...snap.data() } : null;
+    _sessionData = snap.exists()
+      ? { uid: firebaseUser.uid, ...snap.data() }
+      : null;
     callback(_sessionData);
     _resetTimer();
   });
 }
 
-function getSession() { return _sessionData; }
+function getSession() {
+  return _sessionData;
+}
 
 function isAdmin(session) {
   const s = session || _sessionData;
-  return s?.isAdmin === true &&
-         s?.email   === ADMIN_EMAIL &&
-         s?.username === ADMIN_USERNAME;
+  return (
+    s?.isAdmin === true &&
+    s?.email === ADMIN_EMAIL &&
+    s?.username === ADMIN_USERNAME
+  );
 }
 
 // ---- inactivity timer ----
@@ -55,39 +66,49 @@ function _resetTimer() {
     location.href = "login.html";
   }, TIMEOUT_MS);
 }
-function _touchSession() { if (_currentUser) _resetTimer(); }
+function _touchSession() {
+  if (_currentUser) _resetTimer();
+}
 document.addEventListener("click", _touchSession);
 document.addEventListener("keydown", _touchSession);
 
 // ---- login ----
 async function login(username, email) {
-  const uname = username.trim().startsWith("@")
-    ? username.trim().toLowerCase()
-    : "@" + username.trim().toLowerCase();
+  // Normalize username and email the same way as signup
+  let uname = username.trim().toLowerCase();
+  if (!uname.startsWith("@")) uname = "@" + uname;
   const mail = email.trim().toLowerCase();
 
-  if (uname === ADMIN_USERNAME && mail === ADMIN_EMAIL) {
-    try {
-      await signInWithEmailAndPassword(auth, mail, _adminPassword());
-      return { ok: true, redirect: "admin.html" };
-    } catch {
-      return { ok: false, error: "Invalid admin credentials." };
-    }
-  }
-
   try {
-    const snap = await getDocs(
-      query(collection(db, "users"), where("username", "==", uname))
+    // Sign in with Firebase Auth using email + derived password
+    const cred = await signInWithEmailAndPassword(
+      auth,
+      mail,
+      _derivePassword(uname, mail),
     );
-    if (snap.empty) return { ok: false, error: "No account found with that username." };
 
-    const userData = snap.docs[0].data();
-    if (userData.email !== mail) return { ok: false, error: "Email does not match." };
+    // Fetch the user’s own profile doc by UID (matches signup logic)
+    const snap = await getDoc(doc(db, "users", cred.user.uid));
+    if (!snap.exists()) {
+      return { ok: false, error: "Profile not found." };
+    }
 
-    await signInWithEmailAndPassword(auth, mail, _derivePassword(uname, mail));
+    // Optionally verify username/email match what was stored
+    const data = snap.data();
+    if (data.username !== uname || data.email !== mail) {
+      return { ok: false, error: "Username/email mismatch." };
+    }
+
     return { ok: true, redirect: "profile.html" };
-  } catch {
-    return { ok: false, error: "Login failed. Check your credentials." };
+  } catch (e) {
+    console.error("Login error:", e);
+    if (e.code === "auth/wrong-password") {
+      return { ok: false, error: "Incorrect password." };
+    }
+    if (e.code === "auth/user-not-found") {
+      return { ok: false, error: "No account found." };
+    }
+    return { ok: false, error: "Login failed. Try again." };
   }
 }
 
@@ -97,33 +118,30 @@ async function signup(username, email) {
   if (!uname.startsWith("@")) uname = "@" + uname;
   const mail = email.trim().toLowerCase();
 
-  if (uname === ADMIN_USERNAME) return { ok: false, error: "That username is reserved." };
-  if (!mail.includes("@"))      return { ok: false, error: "Enter a valid email." };
-
-  // ✅ Check if username already exists
-  const existing = await getDocs(
-    query(collection(db, "users"), where("username", "==", uname))
-  );
-  if (!existing.empty) return { ok: false, error: "Username already taken." };
+  if (uname === ADMIN_USERNAME)
+    return { ok: false, error: "That username is reserved." };
+  if (!mail.includes("@")) return { ok: false, error: "Enter a valid email." };
 
   try {
     const cred = await createUserWithEmailAndPassword(
-      auth, mail, _derivePassword(uname, mail)
+      auth,
+      mail,
+      _derivePassword(uname, mail),
     );
 
-    // ✅ Save profile in Firestore
     await setDoc(doc(db, "users", cred.user.uid), {
-      uid:      cred.user.uid,
+      uid: cred.user.uid,
       username: uname,
-      email:    mail,
-      stars:    0,
-      isAdmin:  false,
-      joinedAt: Date.now()
+      email: mail,
+      stars: 0,
+      isAdmin: false,
+      joinedAt: Date.now(),
     });
 
     return { ok: true, redirect: "profile.html" };
   } catch (e) {
-    if (e.code === "auth/email-already-in-use") return { ok: false, error: "Email already registered." };
+    if (e.code === "auth/email-already-in-use")
+      return { ok: false, error: "Email already registered." };
     return { ok: false, error: "Signup failed. Try again." };
   }
 }
@@ -137,14 +155,23 @@ async function logout() {
 // ---- guards ----
 function requireAuth(onReady) {
   onSessionReady((session) => {
-    if (!session) { location.href = "login.html"; return; }
-    if (isAdmin(session)) { location.href = "admin.html"; return; }
+    if (!session) {
+      location.href = "login.html";
+      return;
+    }
+    if (isAdmin(session)) {
+      location.href = "admin.html";
+      return;
+    }
     onReady(session);
   });
 }
 function requireAdmin(onReady) {
   onSessionReady((session) => {
-    if (!session || !isAdmin(session)) { location.href = "index.html"; return; }
+    if (!session || !isAdmin(session)) {
+      location.href = "index.html";
+      return;
+    }
     onReady(session);
   });
 }
@@ -167,7 +194,13 @@ function _adminPassword() {
 }
 
 export {
-  onSessionReady, getSession, isAdmin,
-  login, signup, logout,
-  requireAuth, requireAdmin, requireGuest
+  onSessionReady,
+  getSession,
+  isAdmin,
+  login,
+  signup,
+  logout,
+  requireAuth,
+  requireAdmin,
+  requireGuest,
 };
